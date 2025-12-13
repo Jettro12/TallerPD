@@ -14,7 +14,7 @@ async def root():
     Returns:
         dict: A dictionary containing the Hello World message
     """
-    return {"message": "Hello World"}
+    return {"message": "Memento mori, memento vivere"}
 
 
 if __name__ == "__main__":
