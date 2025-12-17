@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY src/ ./src/
 
+# Create static directory if it doesn't exist
+RUN mkdir -p ./src/static
+
 # Expose port 80
 EXPOSE 80
 

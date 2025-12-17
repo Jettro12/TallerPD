@@ -1,153 +1,237 @@
-# Backend Hello World
+# 🎲 Sumador Aleatorio - Full Stack Application
 
-A simple Python backend application that exposes a "Hello World" endpoint using FastAPI.
+Aplicación web full-stack que genera sumas aleatorias y las almacena en una base de datos PostgreSQL.
 
-## Requirements
+## 🚀 Características
+
+- **Frontend**: Interfaz web interactiva con botón para generar sumas aleatorias
+- **Backend**: API REST con FastAPI
+- **Base de datos**: PostgreSQL para almacenar historial de sumas
+- **Docker**: Configuración completa con Docker Compose
+
+## 📋 Requisitos
 
 - Python 3.12
-- Docker (for containerized deployment)
-- Docker Hub account (for publishing)
+- Docker y Docker Compose
+- PostgreSQL (si ejecutas localmente sin Docker)
 
-## Project Structure
+## 🏗️ Estructura del Proyecto
 
 ```
 Backend_HelloWorld/
 ├── src/
 │   ├── __init__.py
-│   └── main.py          # Main FastAPI application
+│   ├── main.py              # API FastAPI
+│   └── static/
+│       └── index.html       # Frontend
 ├── tests/
 │   ├── __init__.py
-│   └── test_main.py     # Unit tests
-├── Dockerfile           # Docker configuration
-├── .dockerignore       # Docker ignore file
-├── requirements.txt    # Python dependencies
-└── README.md          # This file
+│   └── test_main.py
+├── Dockerfile
+├── docker-compose.yml       # Orquestación de contenedores
+├── requirements.txt
+└── README.md
 ```
 
-## API Endpoint
+## 🔌 Endpoints de la API
 
-- **GET /** → Returns `{"message": "Hello World"}`
+- **GET /** → Sirve el frontend
+- **POST /api/sumar** → Genera suma aleatoria y la guarda en BD
+- **GET /api/historial?limit=10** → Obtiene historial de sumas
+- **GET /api/health** → Estado de la aplicación
 
-## Local Development Setup
+## 🐳 Opción 1: Ejecución con Docker Compose (Recomendado)
 
-### 1. Create and activate virtual environment
+Esta es la forma más sencilla de ejecutar el proyecto completo:
 
 ```powershell
-# Create virtual environment
+# Construir y levantar los contenedores
+docker-compose up --build
+
+# O en modo detached (segundo plano)
+docker-compose up -d --build
+```
+
+La aplicación estará disponible en: **http://localhost**
+
+Para detener los contenedores:
+```powershell
+docker-compose down
+
+# Para eliminar también los volúmenes (datos de BD)
+docker-compose down -v
+```
+
+## 💻 Opción 2: Ejecución Local (Desarrollo)
+
+### 1. Configurar PostgreSQL local
+
+Instala PostgreSQL y crea la base de datos:
+
+```sql
+CREATE DATABASE sumador_db;
+```
+
+### 2. Crear y activar entorno virtual
+
+```powershell
+# Crear entorno virtual
 python -m venv venv
 
-# Activate virtual environment (Windows PowerShell)
+# Activar entorno virtual (Windows PowerShell)
 .\venv\Scripts\Activate.ps1
 
-# If you get execution policy error, run:
+# Si hay error de ejecución de políticas:
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-### 2. Install dependencies
+### 3. Instalar dependencias
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-### 3. Run the application
+### 4. Configurar variable de entorno (opcional)
+
+Si tu PostgreSQL tiene credenciales diferentes, configura la URL:
 
 ```powershell
-python -m uvicorn src.main:app --host 0.0.0.0 --port 80
+$env:DATABASE_URL = "postgresql://usuario:password@localhost:5432/sumador_db"
 ```
 
-### 4. Test locally
+### 5. Ejecutar la aplicación
 
 ```powershell
-# Using curl
-curl http://localhost
-
-# Or visit in browser
-# http://localhost
+python -m uvicorn src.main:app --host 0.0.0.0 --port 80 --reload
 ```
 
-### 5. Run tests
+La aplicación estará disponible en: **http://localhost**
+
+### 6. Ejecutar tests
 
 ```powershell
 pytest tests/
 ```
 
-## Docker Deployment
+## 📊 Base de Datos
 
-### 1. Build Docker image
+### Esquema de la tabla `sumas`
 
-```powershell
-docker build -t backend_helloworld:latest .
+```sql
+CREATE TABLE sumas (
+    id SERIAL PRIMARY KEY,
+    numero1 INTEGER NOT NULL,
+    numero2 INTEGER NOT NULL,
+    resultado INTEGER NOT NULL,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
-### 2. Run container locally
+### Consultas útiles
 
-```powershell
-# Run on port 80
-docker run -p 80:80 backend_helloworld:latest
+```sql
+-- Ver todas las sumas
+SELECT * FROM sumas ORDER BY fecha DESC;
 
-# Or run on different port (e.g., 8080)
-docker run -p 8080:80 backend_helloworld:latest
+-- Contar total de sumas
+SELECT COUNT(*) FROM sumas;
+
+-- Ver estadísticas
+SELECT 
+    COUNT(*) as total_sumas,
+    AVG(resultado) as promedio_resultado,
+    MAX(resultado) as resultado_maximo,
+    MIN(resultado) as resultado_minimo
+FROM sumas;
 ```
 
-### 3. Test container
+## 🐋 Docker Commands Quick Reference
 
 ```powershell
-# If running on port 80
-curl http://localhost
+# Ver contenedores en ejecución
+docker-compose ps
 
-# If running on port 8080
-curl http://localhost:8080
+# Ver logs
+docker-compose logs -f
+
+# Reiniciar servicios
+docker-compose restart
+
+# Detener sin eliminar contenedores
+docker-compose stop
+
+# Eliminar todo (contenedores y volúmenes)
+docker-compose down -v
+
+# Reconstruir solo el backend
+docker-compose up -d --build backend
 ```
 
-### 4. Publish to Docker Hub
+## 🧪 Testing
 
 ```powershell
-# Login to Docker Hub
+# Ejecutar todos los tests
+pytest
+
+# Con cobertura
+pytest --cov=src tests/
+
+# Modo verbose
+pytest -v
+```
+
+## 🌐 Uso de la Aplicación
+
+1. Abre tu navegador en **http://localhost**
+2. Haz clic en el botón "✨ Generar Suma Aleatoria"
+3. La aplicación generará dos números aleatorios entre 1 y 100
+4. Verás la operación y el resultado
+5. El historial muestra las últimas 10 sumas realizadas
+6. El historial se actualiza automáticamente cada 30 segundos
+
+## 🔧 Variables de Entorno
+
+| Variable | Descripción | Valor por defecto |
+|----------|-------------|-------------------|
+| `DATABASE_URL` | URL de conexión a PostgreSQL | `postgresql://postgres:postgres@localhost:5432/sumador_db` |
+
+## 📝 Notas Importantes
+
+- El backend corre en el puerto 80
+- PostgreSQL usa el puerto 5432
+- Los datos se persisten en un volumen Docker
+- La aplicación crea automáticamente la tabla `sumas` al iniciar
+- CORS está configurado para permitir todas las origins (ajustar en producción)
+
+## 🚀 Deploy en Producción
+
+Para producción, considera:
+
+1. Cambiar credenciales de PostgreSQL
+2. Configurar CORS específicamente para tu dominio
+3. Usar variables de entorno para secretos
+4. Implementar HTTPS
+5. Configurar límites de rate limiting
+6. Agregar logs más robustos
+7. Implementar monitoreo y alertas
+
+## 📦 Publicar en Docker Hub
+
+```powershell
+# Login
 docker login
 
-# Tag the image with your Docker Hub username
-docker tag backend_helloworld:latest YOUR_USERNAME/backend_helloworld:latest
+# Tag la imagen
+docker tag backend_helloworld:latest TU_USUARIO/sumador-aleatorio:latest
 
-# Push to Docker Hub
-docker push YOUR_USERNAME/backend_helloworld:latest
+# Push
+docker push TU_USUARIO/sumador-aleatorio:latest
 ```
 
-### 5. Pull and run from Docker Hub
+## 🤝 Contribuciones
 
-```powershell
-# Pull the image
-docker pull YOUR_USERNAME/backend_helloworld:latest
+Este proyecto es parte de un curso académico de Programación Distribuida en la UCE.
 
-# Run the container
-docker run -p 80:80 YOUR_USERNAME/backend_helloworld:latest
-```
+## 📄 Licencia
 
-## Docker Commands Quick Reference
-
-```powershell
-# List running containers
-docker ps
-
-# Stop a container
-docker stop CONTAINER_ID
-
-# Remove a container
-docker rm CONTAINER_ID
-
-# List images
-docker images
-
-# Remove an image
-docker rmi backend_helloworld:latest
-
-# View container logs
-docker logs CONTAINER_ID
-```
-
-## Notes
-
-- The application runs on port 80 inside the container
-- Use `-p HOST_PORT:80` to map to a different host port
-- Virtual environment (venv) is only for local development
-- Docker is used for production deployment
-- Always use the `latest` tag for the Docker image
+Proyecto académico - UCE 2025-2026
