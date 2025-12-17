@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sumador Aleatorio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .suma-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            color: white;
+            text-align: center;
+        }
+
+        .resultado {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .operacion {
+            font-size: 1.5em;
+            margin: 10px 0;
+            opacity: 0.9;
+        }
+
+        button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: block;
+            margin: 0 auto;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .historial {
+            margin-top: 40px;
+        }
+
+        .historial h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .historial-lista {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .historial-item {
+            background: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .historial-item:hover {
+            background: #e8e8e8;
+        }
+
+        .historial-operacion {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .historial-fecha {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎲 Sumador Aleatorio</h1>
+        
+        <div class="suma-container">
+            <div id="resultado" class="resultado">
+                Presiona el botón para generar una suma
+            </div>
+            <div id="operacion" class="operacion"></div>
+        </div>
+
+        <button id="btnSumar" onclick="generarSuma()">
+            ✨ Generar Suma Aleatoria
+        </button>
+
+        <div class="historial">
+            <h2>📋 Historial de Sumas</h2>
+            <div id="historial-lista" class="historial-lista">
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <p>No hay sumas registradas aún</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cargar historial al iniciar
+        cargarHistorial();
+
+        async function generarSuma() {
+            const btn = document.getElementById('btnSumar');
+            const resultadoDiv = document.getElementById('resultado');
+            const operacionDiv = document.getElementById('operacion');
+
+            // Deshabilitar botón y mostrar loading
+            btn.disabled = true;
+            resultadoDiv.innerHTML = '<div class="loading"></div>';
+            operacionDiv.textContent = 'Generando números...';
+
+            try {
+                const response = await fetch('/api/sumar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al generar suma');
+                }
+
+                const data = await response.json();
+
+                // Mostrar resultado con animación
+                operacionDiv.textContent = `${data.numero1} + ${data.numero2}`;
+                resultadoDiv.textContent = data.resultado;
+
+                // Actualizar historial
+                await cargarHistorial();
+
+            } catch (error) {
+                console.error('Error:', error);
+                resultadoDiv.innerHTML = '<div class="error">❌ Error al generar suma</div>';
+                operacionDiv.textContent = '';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function cargarHistorial() {
+            const historialLista = document.getElementById('historial-lista');
+
+            try {
+                const response = await fetch('/api/historial?limit=10');
+                
+                if (!response.ok) {
+                    throw new Error('Error al cargar historial');
+                }
+
+                const historial = await response.json();
+
+                if (historial.length === 0) {
+                    historialLista.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <p>No hay sumas registradas aún</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                historialLista.innerHTML = historial.map(item => {
+                    const fecha = new Date(item.fecha);
+                    const fechaFormateada = fecha.toLocaleString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    return `
+                        <div class="historial-item">
+                            <div class="historial-operacion">
+                                ${item.numero1} + ${item.numero2} = ${item.resultado}
+                            </div>
+                            <div class="historial-fecha">
+                                ${fechaFormateada}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error al cargar historial:', error);
+                historialLista.innerHTML = '<div class="error">Error al cargar el historial</div>';
+            }
+        }
+
+        // Actualizar historial cada 30 segundos
+        setInterval(cargarHistorial, 30000);
+    </script>
+</body>
+</html>
